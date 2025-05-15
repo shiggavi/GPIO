@@ -1,6 +1,6 @@
 GPIO APB Peripheral with 4-bit Filter Thresholds
 
-This document provides a step-by-step guide to understanding, instantiating, and integrating the gpio_apb Verilog-2005 module into your design.
+This document provides a step-by-step guide to understanding, instantiating, and integrating the gpio_apb module into your design.
 
 Overview:
     This overview focuses exclusively on the internal GPIO controller logic—how pins are sampled, filtered, driven, and how interrupts and strap sampling integrate—omitting bus and pad-wrapper details.
@@ -109,4 +109,47 @@ Filter + synchronizer:
     Per-pin threshold values via the FILT_THx registers.
 
     Data Flow: Raw gpio_in → two-stage sync → stable sample → filter counter (threshold test) → filtered output gpio_in_filtered → captured in r_in_d for edge detection and internal logic.
+
+Testbench Overview:
+
+    The accompanying testbench validates the GPIO controller across major functional scenarios:
+
+    1) Reset & Initialization
+
+    Apply reset and verify all internal registers (r_out, r_dir, r_ie, r_edge, r_ifg, r_filt_en, r_filt_thresh) return to their default         values.
+
+    2) Basic Read/Write Operations:
+
+    Perform APB writes to each register address and read back to confirm correct data storage and bus behavior.
+
+    3) Direction & Output Tests:
+
+    Toggle gpio_dir bits and verify the top-level wrapper drives or floats physical_pin correctly.
+
+    Write patterns to DIRECT_OUT and masked writes (MASKED_OUT_LOWER/UPPER), then sample physical_pin to ensure output value matches             expected.
+
+    4) Input Synchronization & Filtering:
+
+    Drive physical_pin with glitchy pulses shorter than the programmed threshold; confirm that IN register remains stable.
+
+    Apply valid input transitions and ensure filtered output (IN) reflects changes only after threshold cycles.
+
+    5) Interrupt Generation:
+
+    Configure EDGE for rising and falling edges, enable interrupts via IE, toggle physical_pin, and verify IFG flags and irq assertion.
+
+    Test clear-on-write behavior by writing to IFG and confirming flags reset and irq deasserts.
+
+    6) Strap Sampling:
+
+    Assert strap_en and sample static physical_pin values; verify STRAP_DATA and STRAP_VALID registers.
+
+    Clear and re-arm sampler via STRAP_VALID write, then retest capture.
+
+    7) Concurrent Operations:
+
+    Mix output drives, input transitions, interrupts, and strap sampling in a single sequence to ensure operations do not interfere with        one another.
+
+
+
 
