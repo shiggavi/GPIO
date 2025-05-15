@@ -4,6 +4,44 @@ This document provides a step-by-step guide to understanding, instantiating, and
 
 Overview:
     This overview focuses exclusively on the internal GPIO controller logic—how pins are sampled, filtered, driven, and how interrupts and strap sampling integrate—omitting bus and pad-wrapper details.
+
+    GPIO stands for General Purpose Input/Output.
+    This specific GPIO module is a hardware IP block (a reusable component in SoC/ASIC/FPGA designs) that lets software control and monitor 32 digital IO pins, each independently.
+    
+    • Each GPIO pin is just one digital signal line — it can hold a value of either 0 or 1 at any given time.
+    • When the spec says "32 GPIO ports", it means you have 32 separate GPIO pins, each capable of input/output.
+    • So together, they form a 32-bit wide parallel bus if you want to use them that way.
+    Think of it like this:
+    
+    Pin #	Pin Value
+    GPIO[0]	1 (bit 0)
+    GPIO[1]	0 (bit 1)
+    ...	...
+    GPIO[31]	1 (bit 31)
+    → Together, these 32 individual bits can represent a single 32-bit data word.
+    
+    Let’s say you want to send the 32-bit binary value 0xA5A5A5A5 through GPIO.
+    That value in binary is:
+    
+    10100101 10100101 10100101 10100101
+    
+    So you’ll set:
+    	• GPIO[31] = 1
+    	• GPIO[30] = 0
+    	• ...
+    	• GPIO[0] = 1
+    Each GPIO carries one of those bits.
+    
+    Input or Output?
+    	• If configured as outputs, your software can drive a 32-bit value onto external devices.
+    	• If configured as inputs, your software can read a 32-bit value from external devices (e.g., DIP switches, sensors, etc.).
+    
+    What Does the Interrupt Logic Do?
+    
+    The interrupt logic in this GPIO IP monitors input changes on each GPIO pin and notifies the processor (or another system module) when something important happens.
+In simpler terms:
+	It watches the GPIO pins and shouts "Hey! Something changed!" whenever a specific event (like a rising edge) occurs.
+
     APB3 compliant bus interface (PSEL, PENABLE, PWRITE, PADDR, PWDATA, PRDATA, PREADY, PSLVERR)
 The Advanced Peripheral Bus (APB3) provides a simple, low-power interface for register-mapped peripherals:
 
